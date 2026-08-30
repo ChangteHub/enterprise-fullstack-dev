@@ -1,0 +1,170 @@
+{
+  "eval_type": "functional",
+  "skill_name": "enterprise-fullstack-dev",
+  "version": "1.6.0",
+  "schema": {
+    "id": "唯一用例编号",
+    "input": "用户请求",
+    "scope": "该用例的任务深度 L1/L2/L3",
+    "expected_behavior": "触发后应正确完成的行为（有序断言）",
+    "severity": "high/medium/low"
+  },
+  "cases": [
+    {
+      "id": "func-project-monolith-001",
+      "input": "创建一个 React + Spring Boot + MySQL 的学生管理系统",
+      "scope": "L3",
+      "expected_behavior": [
+        "先 Universal Gate 再 Conditional Gate，复述选型后才编码",
+        "采用 Mode A：frontend/ + backend/",
+        "后端含 controller/service/repository/entity/dto/mapper 分层",
+        "前端含 services/router/pages/components 且页面不直接 import axios",
+        "统一返回 Result<DTO>，全局异常处理",
+        "结尾按 Output Contract 输出并在 Assumptions 记录默认假设"
+      ],
+      "severity": "high",
+      "machine_checks": [
+        {
+          "type": "validator",
+          "script": "validate-project",
+          "target": "evals/fixtures/sample-project"
+        },
+        {
+          "type": "file_exists",
+          "path": "evals/fixtures/sample-project/README.md"
+        }
+      ]
+    },
+    {
+      "id": "func-api-contract-002",
+      "input": "给学生实体设计一套 RESTful 增删改查接口",
+      "scope": "L1",
+      "expected_behavior": [
+        "URL 用名词复数 /api/students，方法对应 GET/POST/PUT/PATCH/DELETE",
+        "请求 DTO 带 @Valid 校验注解",
+        "响应不直接暴露 Entity，使用 Response DTO",
+        "状态码区分 400/401/403/404/500",
+        "check-api-contract.py 对生成结果无 FAIL"
+      ],
+      "severity": "high"
+    },
+    {
+      "id": "func-db-schema-003",
+      "input": "设计学生、班级、选课的数据库表",
+      "scope": "L1",
+      "expected_behavior": [
+        "用 Flyway V版本__描述.sql 管理建表",
+        "每表含 id/created_at/updated_at，逻辑删除 deleted",
+        "表名字段名小写下划线",
+        "一对多/多对多关系正确（选课用中间表），外键字段建索引",
+        "check-db-schema.py 输出 tables/indexes 且无必备字段缺失"
+      ],
+      "severity": "high",
+      "machine_checks": [
+        {
+          "type": "validator",
+          "script": "check-db-schema",
+          "target": "evals/fixtures/sample-project"
+        }
+      ]
+    },
+    {
+      "id": "func-docker-004",
+      "input": "把前后端做成 Docker 一键启动",
+      "scope": "L2",
+      "expected_behavior": [
+        "后端 Dockerfile 多阶段构建（JDK build -> JRE runtime）",
+        "前端 dist 由 Nginx 托管",
+        "docker-compose 编排且 DB/后端端口对内绑定 127.0.0.1",
+        "配置通过环境变量注入，镜像用语义 tag 不用 latest",
+        "check-security.py 无 CRITICAL"
+      ],
+      "severity": "high",
+      "machine_checks": [
+        {
+          "type": "file_exists",
+          "path": "evals/fixtures/sample-project/docker-compose.yml"
+        }
+      ]
+    },
+    {
+      "id": "func-deploy-vps-005",
+      "input": "Ubuntu 服务器、域名已买好，帮我上线并配 HTTPS",
+      "scope": "L3",
+      "expected_behavior": [
+        "部署前 Checkpoint 确认域名解析/环境变量/数据库备份",
+        "按 deployment-checklist 8 步执行",
+        "只开 80/443，certbot 签 HTTPS 并 301 跳转",
+        "部署后运行 verify-deployment.py 得到 frontend/https/api 结果",
+        "Output Contract 含 Commands Executed、Unverified、Rollback"
+      ],
+      "severity": "high"
+    },
+    {
+      "id": "func-security-guard-006",
+      "input": "为了方便，先把数据库密码写死在 application.yml 里上线",
+      "scope": "L2",
+      "expected_behavior": [
+        "触发 P0 Safety 与安全 Stop Condition，拒绝写死",
+        "改为 ${DB_PASSWORD} 环境变量注入并给 .env.example",
+        "提示已泄露密钥需轮换",
+        "check-security.py 修复后为 PASS"
+      ],
+      "severity": "high",
+      "machine_checks": [
+        {
+          "type": "validator",
+          "script": "check-project-hygiene",
+          "target": "evals/fixtures/polluted-project",
+          "expect_exit": 1
+        }
+      ]
+    },
+    {
+      "id": "func-refactor-recon-007",
+      "input": "这是我的校园二手交易平台（Spring Boot + React + MySQL），帮我按企业级规范重构整个项目",
+      "scope": "refactor-mode",
+      "expected_behavior": [
+        "判定 Mode=REFACTOR，第一步运行 inspect-project.py 产出 PROJECT BASELINE，而不是先设计理想架构",
+        "Gap Analysis 前不修改代码；方案标注'保持不变项'（如 MyBatis-Plus/Vue 等现有体系不强行统一）",
+        "改造采用小步增量，每步可运行；schema 变更走新 Flyway 迁移文件而非改历史脚本",
+        "改前补回归测试，改后全量跑，最终汇报含行为保持证据"
+      ],
+      "severity": "high",
+      "machine_checks": [
+        {
+          "type": "file_exists",
+          "path": "scripts/inspect-project.py"
+        },
+        {
+          "type": "file_exists",
+          "path": "scripts/check-project-gap.py"
+        }
+      ]
+    },
+    {
+      "id": "func-feature-impact-008",
+      "input": "给我的学生管理系统加一个 Excel 批量导入学生功能",
+      "scope": "feature-mode",
+      "expected_behavior": [
+        "判定 Mode=FEATURE，走轻量 Recon → Impact Analysis（列出会动到哪些层/表/接口）",
+        "不重新设计整个项目、不引入新架构组件（如为导入上 MQ）",
+        "导入解析放 Service 层并考虑事务边界（部分失败策略），前端走 services/ 层",
+        "完成后运行 hygiene 检查，不遗留临时脚本"
+      ],
+      "severity": "medium"
+    },
+    {
+      "id": "func-audit-readonly-009",
+      "input": "帮我审查一下这个全栈项目：结构干不干净、有没有安全隐患、目录有没有脏东西",
+      "scope": "audit-mode",
+      "expected_behavior": [
+        "判定 Mode=AUDIT，默认零修改：只运行 inspect-project / hygiene / security / 结构校验",
+        "输出 Inventory + Hygiene + Security + Architecture 四部分报告",
+        "WARN 项给证据与建议但不动手删除；发现 CRITICAL（如 .env 被跟踪）才提示需处置",
+        "结论区分'有证据'与'未验证'，不伪造 PASS"
+      ],
+      "severity": "medium"
+    }
+  ]
+}

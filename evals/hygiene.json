@@ -1,0 +1,66 @@
+{
+  "description": "Project Hygiene 评估用例：验证 check-project-hygiene.py 对干净/污染样例的判定符合预期（Step Release Gate: sample-project 与 polluted-project 均能得到预期结果）",
+  "cases": [
+    {
+      "id": "hyg-polluted-001",
+      "input": "evals/fixtures/polluted-project（含 .env 未忽略、legacy_tool.exe、tmp/ old-backend/ backup/ test2/ 可疑目录、notes.txt 孤儿文件）",
+      "expected_behavior": [
+        "CRITICAL: .env（非 git 仓库无法确认忽略状态）；ERROR: legacy_tool.exe（可执行文件，v3.1 降为 ERROR 级）→ 退出码 1",
+        "WARN: tmp/、old-backend/、backup/、test2/ 命中 Suspicious，附证据与候选处理方案，进 Hygiene Queue 不阻断语义",
+        "WARN: notes.txt 命中 Orphaned，要求用户确认归属",
+        "脚本绝不自动删除任何文件；node_modules/ 被 .gitignore 声明故跳过"
+      ],
+      "severity": "high",
+      "machine_checks": [
+        {
+          "type": "validator",
+          "script": "check-project-hygiene",
+          "target": "evals/fixtures/polluted-project",
+          "expect_exit": 1
+        }
+      ]
+    },
+    {
+      "id": "hyg-clean-002",
+      "input": "evals/fixtures/sample-project（黄金干净样例）",
+      "expected_behavior": [
+        "0 CRITICAL，退出码 0",
+        "顶层目录/文件均命中 Allowed 清单"
+      ],
+      "severity": "high",
+      "machine_checks": [
+        {
+          "type": "validator",
+          "script": "check-project-hygiene",
+          "target": "evals/fixtures/sample-project",
+          "expect_exit": 0
+        }
+      ]
+    },
+    {
+      "id": "hyg-ops-script-003",
+      "input": "项目 scripts/ 目录下存在 backup.sh / init-db.sh / logs.sh（Skill 官方推荐脚本）",
+      "expected_behavior": [
+        "不判 Suspicious（scripts/ 目录豁免二级扫描 + 运维脚本名白名单）",
+        "已知误报模式应修脚本豁免规则并记 CHANGELOG，而不是让用户忽略告警"
+      ],
+      "severity": "medium",
+      "machine_checks": [
+        {
+          "type": "file_contains",
+          "path": "scripts/check-project-hygiene.py",
+          "pattern": "SECOND_LEVEL_EXEMPT"
+        }
+      ]
+    },
+    {
+      "id": "hyg-tracked-env-004",
+      "input": "git 仓库中 .env 已被提交跟踪（git ls-files 含 .env）",
+      "expected_behavior": [
+        "CRITICAL：.env 已被 git 跟踪，提示轮换密钥并 git rm --cached（凭据入库不可只删文件）",
+        "Git tracked 状态优先于 .gitignore 文本猜测"
+      ],
+      "severity": "high"
+    }
+  ]
+}

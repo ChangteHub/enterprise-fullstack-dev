@@ -1,0 +1,175 @@
+{
+  "eval_type": "trigger",
+  "skill_name": "enterprise-fullstack-dev",
+  "version": "1.6.0",
+  "schema": {
+    "id": "唯一用例编号",
+    "input": "用户自然语言请求",
+    "should_trigger": "true=应进入 Skill；false=不应触发",
+    "expected_depth": "L0单点/L1单层/L2跨层/L3项目级，或 NONE(不触发)",
+    "expected_behavior": "期望的触发与分流行为",
+    "severity": "high/medium/low，误判代价越高越严重"
+  },
+  "cases": [
+    {
+      "id": "trigger-001",
+      "input": "帮我搭建一个前后端分离的学生管理系统，React 加 Spring Boot",
+      "should_trigger": true,
+      "expected_depth": "L3",
+      "expected_behavior": ["完整进入 Layer 0 Universal+Conditional Gate", "选 Mode A", "走完整 Workflow"],
+      "severity": "high"
+    },
+    {
+      "id": "trigger-002",
+      "input": "帮我把 React 前端和 Java 后端部署到一台 VPS 上",
+      "should_trigger": true,
+      "expected_depth": "L3",
+      "expected_behavior": ["识别为全栈部署任务", "采用 Docker+Nginx 最小方案", "不无理由引入 K8s", "部署前走 Checkpoint"],
+      "severity": "high"
+    },
+    {
+      "id": "trigger-003",
+      "input": "给这个已有的 Spring Boot 项目加上 Docker 和 Nginx",
+      "should_trigger": true,
+      "expected_depth": "L2",
+      "expected_behavior": ["跨层部署任务，触发核心流程", "只加载 docker/nginx reference", "不重写业务代码"],
+      "severity": "high"
+    },
+    {
+      "id": "trigger-004",
+      "input": "我的网站需要 Redis 吗？帮我判断一下",
+      "should_trigger": true,
+      "expected_depth": "L2",
+      "expected_behavior": ["属于技术选型判断，触发", "先追问真实瓶颈", "无真实问题则不引入"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-005",
+      "input": "帮我设计用户端网站和管理员后台两个前端，共用一个 Java 后端的目录",
+      "should_trigger": true,
+      "expected_depth": "L3",
+      "expected_behavior": ["识别多前端入口", "选 apps/ 结构", "后端保持单体"],
+      "severity": "high"
+    },
+    {
+      "id": "trigger-006",
+      "input": "后端 controller、service、repository 应该怎么分层",
+      "should_trigger": true,
+      "expected_depth": "L1",
+      "expected_behavior": ["单层问题", "只加载 backend-structure.md", "不走全局架构 Gate"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-007",
+      "input": "前端调后端接口的 axios 封装和 services 层怎么写",
+      "should_trigger": true,
+      "expected_depth": "L1",
+      "expected_behavior": ["单层问题", "只加载 frontend-structure.md"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-008",
+      "input": "帮我配 Nginx 反向代理和 HTTPS 证书",
+      "should_trigger": true,
+      "expected_depth": "L2",
+      "expected_behavior": ["加载 nginx-deployment.md", "产出 server block+反代+HTTPS+health"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-009",
+      "input": "数据库表怎么设计，Flyway 迁移脚本怎么写",
+      "should_trigger": true,
+      "expected_depth": "L1",
+      "expected_behavior": ["加载 database-design.md", "产出 migration 与索引方案"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-010",
+      "input": "单体项目什么时候该拆成微服务、上 K8s",
+      "should_trigger": true,
+      "expected_depth": "L2",
+      "expected_behavior": ["架构选型判断", "按 Advanced Tech Timing 给条件", "不鼓励过早拆分"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-011",
+      "input": "用 Java 写一个二分查找算法",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["L0 单点算法题", "不进入 Skill，不建目录、不走 Gate", "直接给出算法"],
+      "severity": "high"
+    },
+    {
+      "id": "trigger-012",
+      "input": "给这段排序代码加几行注释",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["L0 单文件润色", "不套用全栈流程"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-013",
+      "input": "解释一下什么是 JavaScript 闭包",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["纯概念问题", "不触发工程流程"],
+      "severity": "low"
+    },
+    {
+      "id": "trigger-014",
+      "input": "帮我把这个独立工具函数里的变量名改得更清晰",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["L0 单点重构", "直接改，不加载 Skill"],
+      "severity": "low"
+    },
+    {
+      "id": "trigger-015",
+      "input": "帮我写一个校验手机号的正则表达式",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["L0 单点代码片段", "直接给正则，不建工程结构"],
+      "severity": "low"
+    },
+    {
+      "id": "trigger-016",
+      "input": "这段 Python 报了 IndexError，帮我看这一行怎么改",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["L0 单点排错", "定位并修复该行，不套用全栈流程"],
+      "severity": "medium"
+    },
+    {
+      "id": "trigger-017",
+      "input": "用 JavaScript 怎么把一个数组去重",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["L0 语法/片段问题", "直接给写法"],
+      "severity": "low"
+    },
+    {
+      "id": "trigger-018",
+      "input": "解释一下 MySQL 的 left join 和 inner join 区别",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["纯概念解释", "不触发工程设计流程"],
+      "severity": "low"
+    },
+    {
+      "id": "trigger-019",
+      "input": "帮我把这段英文技术文档翻译成中文",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["与全栈工程无关", "直接翻译"],
+      "severity": "low"
+    },
+    {
+      "id": "trigger-020",
+      "input": "把这个 CSS 按钮的颜色调深一点",
+      "should_trigger": false,
+      "expected_depth": "NONE",
+      "expected_behavior": ["L0 单点样式调整", "直接改样式，不加载前端结构 reference"],
+      "severity": "low"
+    }
+  ]
+}

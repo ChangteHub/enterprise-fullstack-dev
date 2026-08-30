@@ -1,0 +1,119 @@
+=== inspect-project.py project1 ===
+PROJECT BASELINE
+============================================================
+Repository Shape:
+  - 前端工程: frontend
+  - 后端工程: backend
+  - 仓库形态: 单仓库(frontend+backend)
+Frontend Stack:
+  - 框架: react 18.3.1
+  - 构建: vite
+  - UI: antd-mobile
+  - 状态管理: zustand
+  - 锁文件: package-lock.json
+  - src 目录: components, hooks, pages, router, services, stores, types, utils
+Backend Stack:
+  - 构建: Maven (pom.xml)
+  - Java: 21
+  - Spring Boot: 3.2.5
+  - ORM: MyBatis-Plus
+  - 组件: Spring Security, JWT, WebSocket, Actuator, API 文档
+  - 后端分层包: common, config, controller, dto, entity, exception, repository, security, service
+Database:
+  - 迁移目录: backend\src\main\resources\db\migration
+  - Flyway: 是
+Runtime:
+  - Dockerfile: backend\Dockerfile, frontend\Dockerfile
+  - Compose: docker-compose.yml
+  - Nginx: frontend\nginx.conf
+CI-CD:
+  - GitHub Actions: ci.yml
+Observability:
+  - 健康检查: Spring Actuator
+Git Status:
+  - 分支: main
+  - 未提交变更: 干净
+  - .env: 未跟踪
+------------------------------------------------------------
+Current Risks:
+  - （未发现明显风险）
+Open Questions（需要用户决策的方向）:
+  - （无——由 Decision Record 阶段确定）
+Unknowns（未能自动发现，需人工确认）:
+  - （无）
+------------------------------------------------------------
+PASS  inspect-project.py
+Summary: recon OK, 0 risks, 0 unknowns（侦察为只读输出，风险定级交给 hygiene/security 检查器）
+EXIT=0
+
+=== check-project-hygiene.py project1 ===
+  - PASS     .env 存在但未被跟踪（符合忽略策略）
+  - PASS     root/Makefile 符合清单
+  - PASS     root/README.md 符合清单
+  - PASS     root/backend/ 符合清单
+  - PASS     root/docker-compose.yml 符合清单
+  - PASS     root/docs/ 符合清单
+  - PASS     root/frontend/ 符合清单
+  - PASS     root/scripts/ 符合清单
+  - WARN     孤儿文件 root/reasonix.toml 未被识别为项目标准文件（0.6 KB, 最后修改 2026-08-18）——请确认归属
+------------------------------------------------------------
+WARN  check-project-hygiene.py
+Summary: 8 allowed, 1 suspicious/orphaned, 0 critical
+原则: 只检测不删除；WARN 项需 Agent/开发者给出证据并确认处置方案
+卫生检查: PASS（有需确认项）
+EXIT=0
+
+=== validate-project.py project1 ===
+------------------------------------------------------------
+探测模式: Mode A | 前端 1 个, 后端 1 个
+分层判定: 数据访问 repository|mapper|dao / 传输对象 dto|vo|model / 异常 exception|common 任选其一
+PASS  validate-project.py
+Summary: 0 failed, 0 warnings
+EXIT=0
+
+=== check-security.py project1 ===
+------------------------------------------------------------
+PASS  check-security.py
+Summary: 0 warnings / 0 critical
+安全检查: PASS
+EXIT=0
+
+=== check-db-schema.py project1 ===
+------------------------------------------------------------
+PASS  check-db-schema.py
+Summary: 10 tables / 108 indexes, 0 warnings
+说明: 检查基于迁移序列重放后的最终 schema（V1..Vn 依次重放 CREATE/ALTER/DROP）
+EXIT=0
+
+=== check-api-contract.py project1 ===
+------------------------------------------------------------
+PASS  check-api-contract.py
+Summary: 48 endpoints checked, 0 warnings
+EXIT=0
+
+=== smoke: sample-project 全套 ===
+--- validate-project ---
+PASS  validate-project.py
+Summary: 0 failed, 0 warnings
+EXIT=0
+--- check-security ---
+PASS  check-security.py
+Summary: 0 warnings / 0 critical
+安全检查: PASS
+EXIT=0
+--- check-db-schema ---
+PASS  check-db-schema.py
+Summary: 1 tables / 2 indexes, 0 warnings
+EXIT=0
+PASS  check-api-contract.py
+Summary: 3 endpoints checked, 0 warnings
+EXIT=0
+
+=== hygiene: polluted-project ===
+  - CRITICAL 高风险文件 root/legacy_tool.exe（可执行/构建产物不应入库）
+------------------------------------------------------------
+FAIL  check-project-hygiene.py
+Summary: 3 allowed, 7 suspicious/orphaned, 2 critical
+原则: 只检测不删除；WARN 项需 Agent/开发者给出证据并确认处置方案
+卫生检查: FAIL —— CRITICAL 阻断（敏感/禁止文件），修复后才能继续
+EXIT=0

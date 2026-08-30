@@ -1,0 +1,52 @@
+# Project Decision Record — 机器可读 schema 与示例
+# ============================================================
+# 位置约定：<项目根>/.decision/project-decision.yaml
+# 校验器：scripts/validate-decision-record.py（缺失 / status != confirmed /
+#         必填字段缺失 → BLOCKED，阻断 BLUEPRINT/SCAFFOLD/IMPLEMENT）
+# 与人读版 docs/architecture/decision-record.md 并存：md 面向人，yaml 面向门禁。
+# 仅使用两层结构的 key: value，不使用列表（解析器保持零依赖）。
+# ============================================================
+
+decision_id: FS-2026-001     # 稳定标识（决策 ID，格式随意但一经分配不再变更）
+revision: 1                  # 每次 Re-open 重新决策时递增
+status: confirmed            # confirmed / assumed / draft —— 三态语义：
+                             #   draft: 只能收集信息，禁止 Scaffold/实现（硬门禁）
+                             #   assumed: 按最小方案明确假设后可本地开发；
+                             #     禁止生产部署/Remote Side Effect/高风险迁移，最终报告须列出请求追认
+                             #   confirmed: 开发者已确认，完整正常流程
+scope: L3                    # L0 / L1 / L2 / L3
+project_mode: create         # create / refactor / feature / deploy / audit
+
+frontend:
+  mode: a                    # a（单前端）/ a-plus（多前端+单体后端）/ b（多前端+微服务）
+  ux_surface:                # UX Surface Matrix：明确每个表面支持的端，测试按此选 viewport
+    user_web_mobile: true    # 用户端 Web 移动端
+    user_web_desktop: true   # 用户端 Web 桌面端
+    admin_mobile: false      # 管理后台移动端（false=明确不支持，测试不测、只留证据）
+    admin_desktop: true      # 管理后台桌面端
+
+backend:
+  architecture: monolith     # monolith / modular-monolith / microservices
+  framework: spring-boot     # spring-boot / 其他（自由文本）
+
+database:
+  engine: mysql              # mysql / postgresql / none
+  migration: flyway          # flyway / liquibase / none
+
+auth:
+  enabled: true
+  strategy: jwt              # none / jwt / oauth2 / oidc
+
+advanced:                    # 高级组件：默认全 false，引入必须有真实理由（写 md 版 Assumptions）
+  redis: false
+  mq: false
+  elasticsearch: false
+  kubernetes: false
+
+deployment:
+  target: vps                # local / vps / cloud / k8s
+  runtime: docker-compose    # docker-compose / k8s / bare-metal
+  proxy: nginx               # nginx / none
+
+ci:
+  enabled: true              # CI/CD 是否纳入本轮范围
