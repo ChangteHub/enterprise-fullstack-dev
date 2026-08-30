@@ -3,12 +3,12 @@
   "cases": [
     {
       "id": "hyg-polluted-001",
-      "input": "evals/fixtures/polluted-project（含 .env 未忽略、legacy_tool.exe、tmp/ old-backend/ backup/ test2/ 可疑目录、notes.txt 孤儿文件）",
+      "input": "evals/fixtures/polluted-project（skill 仓库内 git 跟踪样例：.env 已被 .gitignore 忽略、legacy_tool.exe 被故意 git 跟踪、tmp/ old-backend/ backup/ test2/ 可疑目录、notes.txt 孤儿文件）",
       "expected_behavior": [
-        "CRITICAL: .env（非 git 仓库无法确认忽略状态）；ERROR: legacy_tool.exe（可执行文件，v3.1 降为 ERROR 级）→ 退出码 1",
-        "WARN: tmp/、old-backend/、backup/、test2/ 命中 Suspicious，附证据与候选处理方案，进 Hygiene Queue 不阻断语义",
-        "WARN: notes.txt 命中 Orphaned，要求用户确认归属",
-        "脚本绝不自动删除任何文件；node_modules/ 被 .gitignore 声明故跳过"
+        ".env 被 .gitignore 声明且未跟踪 → PASS（符合忽略策略），不再按非 git 场景报 CRITICAL",
+        "ERROR×2：legacy_tool.exe 顶层判定 + git 跟踪扫描（可执行产物入库，应 git rm --cached）→ 退出码 1",
+        "WARN×7：tmp/、tmp/debug.log、old-backend/、backup/、test2/ 命中 Suspicious，notes.txt 与 legacy_tool.exe 孤儿/产物提示，进 Hygiene Queue 不阻断",
+        "脚本绝不自动删除任何文件；node_modules/、target/ 等构建目录直接跳过"
       ],
       "severity": "high",
       "machine_checks": [
@@ -16,7 +16,14 @@
           "type": "validator",
           "script": "check-project-hygiene",
           "target": "evals/fixtures/polluted-project",
-          "expect_exit": 1
+          "expect_exit": 1,
+          "expect_contains": [
+            "legacy_tool.exe",
+            "2 error, 0 critical"
+          ],
+          "expect_not_contains": [
+            "非 git 仓库"
+          ]
         }
       ]
     },
@@ -33,7 +40,10 @@
           "type": "validator",
           "script": "check-project-hygiene",
           "target": "evals/fixtures/sample-project",
-          "expect_exit": 0
+          "expect_exit": 0,
+          "expect_contains": [
+            "0 hygiene-queue, 0 error, 0 critical"
+          ]
         }
       ]
     },

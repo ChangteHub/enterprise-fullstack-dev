@@ -23,14 +23,15 @@ python scripts/check-db-schema.py  evals/fixtures/sample-project
 
 任何脚本报 FAIL/CRITICAL 即视为回归失败：先区分是 fixture 需要更新，还是脚本误报/规则变化，修复后再发布（对应 SKILL.md Release Gate 的"全部 validator smoke test"一项）。
 
-## polluted-project 污染基线（2026-08-30 实测，v3.1.0 四级严重度）
+## polluted-project 污染基线（2026-08-30 实测，v3.1.2 四级严重度 + git 跟踪路径）
 
-用于 Project Hygiene 的"应发现"路径（evals/hygiene.json，含 machine_checks 可由 runner 执行）：
+用于 Project Hygiene 的"应发现"路径（evals/hygiene.json，含 machine_checks 可由 runner 执行）。
+该 fixture 位于 skill git 仓库内，其中 `.env` 被 `.gitignore` 忽略（未跟踪）、`legacy_tool.exe` 等被**故意 git 跟踪**以覆盖 tracked 判定路径：
 
 | 脚本 | 预期结果 | 实测基线 |
 |------|---------|---------|
-| `check-project-hygiene.py polluted-project` | FAIL（退出码 1） | `1 CRITICAL`（.env 未忽略）+ `1 ERROR`（legacy_tool.exe 可执行文件，v3.1 起为 ERROR 级）+ `5 WARN`（tmp/、old-backend/、backup/、test2/、notes.txt，进 Hygiene Queue） |
-| `check-project-hygiene.py sample-project` | PASS（0 CRITICAL/ERROR） | 通过 |
+| `check-project-hygiene.py polluted-project` | FAIL（退出码 1） | `0 CRITICAL`（.env 已忽略→PASS）+ `2 ERROR`（legacy_tool.exe：顶层判定 + git 跟踪扫描各一条）+ `7 WARN`（tmp/、tmp/debug.log、old-backend/、backup/、test2/、notes.txt、exe 未跟踪提示，进 Hygiene Queue） |
+| `check-project-hygiene.py sample-project` | PASS（0 CRITICAL/ERROR/WARN） | 通过 |
 
 ## 其他 v3.1 回归 fixture
 
@@ -49,6 +50,6 @@ python scripts/check-db-schema.py  evals/fixtures/sample-project
 
 ## 注意：对 Skill 包自身运行 hygiene 的预期结果
 
-在 skill 根目录运行 `check-project-hygiene.py .` 会因 `polluted-project/.env` 报 1 个 CRITICAL——
-**这是扫描器正确工作的证据**（fixture 故意放置的敏感文件占位，内容为 change-me 占位值，非真实凭据）。
-该 CRITICAL 仅在"把 skill 包当作被检项目"这一非典型场景出现；对被测项目无影响。
+在 skill 根目录运行 `check-project-hygiene.py .` 会因 `polluted-project/legacy_tool.exe`（被故意 git 跟踪）报 1 个 ERROR——
+**这是扫描器正确工作的证据**（fixture 故意跟踪一个可执行文件以覆盖 tracked 路径，内容为空占位，非真实程序）。
+该 ERROR 仅在"把 skill 包当作被检项目"这一非典型场景出现；对被测项目无影响。

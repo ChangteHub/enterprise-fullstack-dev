@@ -2,6 +2,10 @@
 __pycache__/
 *.pyc
 
+# JVM 构建产物（fixture 只保留源码，target/ 由 Maven 编译再生）
+target/
+*.class
+
 # 本地环境
 .env
 .env.local

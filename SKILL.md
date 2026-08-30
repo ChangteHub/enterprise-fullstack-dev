@@ -11,10 +11,10 @@ description: >-
   只有存在真实问题时才引入 Redis、消息队列、ES、微服务、Kubernetes。不适用于纯算法题、单文件代码润色、
   与 Web 全栈无关的编程任务。
 compatibility: 需要可读写的项目工作区；涉及构建/部署任务时需要 Node、Java(Maven)、Docker 等对应工具链。
-version: 3.1.1
+version: 3.1.2
 ---
 
-# Skill: enterprise-fullstack-dev（v3.1.1 冻结版）
+# Skill: enterprise-fullstack-dev（v3.1.2 冻结版）
 
 > **定位**：轻量的"项目操作系统"，不是知识手册。生命周期：**先认识项目 → 只问必须决定的事 → 冻结决策 → 蓝图骨架 → 按模块实现 → 持续卫生 → 可验证交付**。
 > SKILL.md 是控制流（思考与流程）；references/ 按阶段加载（知识）；scripts/ 确定性执行层（只检查不修改）；assets/ 可复用模板；evals/ 证明 Skill 自身有效。
@@ -63,7 +63,7 @@ AUDIT    INIT → READONLY-RECON → HYGIENE → SECURITY → ARCHITECTURE → R
 
 | Gate | 退出条件（机器可查） |
 |------|--------------------|
-| RECORD | `validate-decision-record.py` PASS（status=confirmed、字段齐全）；DRAFT 阻断 |
+| RECORD | `validate-decision-record.py` PASS：CONFIRMED 全放行 / ASSUMED 仅放行本地阶段（锁生产与 Remote Side Effect）；DRAFT 阻断 |
 | VALIDATE_SCAFFOLD | `validate-project` PASS + hygiene 无 CRITICAL/ERROR |
 | IMPLEMENT 期间 | hygiene WARN 只进 Queue 不阻塞；CRITICAL/ERROR 即停 |
 | FINAL_HYGIENE | Queue 已呈报用户；CRITICAL/ERROR=0 |
@@ -103,7 +103,8 @@ Auth: ...（无登录写 N/A）                  CI/CD: ...
 Observability: ...                        Advanced: ...（默认"暂不引入"）
 Deployment: ...
 Assumptions: 列出全部默认假设
-Status: CONFIRMED / DRAFT（DRAFT 不得进入 SCAFFOLD）
+decision_id: FS-2026-001    revision: 1（Re-open 递增）
+Status: CONFIRMED / ASSUMED / DRAFT（DRAFT 不得进入 SCAFFOLD；ASSUMED 可本地开发、锁生产）
 ```
 
 **机器可读状态（v3.1.1 硬门禁）**：同时维护 `.decision/project-decision.yaml`（格式见 `.decision/schema.yaml`），
@@ -120,7 +121,7 @@ Status: CONFIRMED / DRAFT（DRAFT 不得进入 SCAFFOLD）
 
 yaml 是状态源，md 是人读镜像；md/yaml 状态不一致时 validator 阻断并要求同步。
 
-- L2/L3 必须有；L1 可省略。自主执行（无人可答）时：按兜底默认生成、Status 标 DRAFT、逐条列入 Assumptions，并在最终汇报请用户追认——**不因信息缺失停工，也不擅自升级复杂架构**
+- L2/L3 必须有；L1 可省略。自主执行（无人可答）时：按兜底默认生成、Status 标 **ASSUMED**（不是 DRAFT——DRAFT 会被门禁硬阻断）、逐条列入 Assumptions，允许本地 Blueprint/Scaffold/构建测试但锁定生产部署与 Remote Side Effect，并在最终汇报请用户追认转 CONFIRMED——**不因信息缺失停工，也不擅自升级复杂架构**
 - **Re-open 规则**：新事实导致原决策失效时，说明新事实 → 重新决策 → 更新 md+yaml 并记录变更原因
 - **初始化必答 UX Surface Matrix**（frontend.ux_surface 字段）：用户端/管理后台 × 移动/桌面 逐个表态支持与否；
   不支持可以是合理产品决策，但必须显式记录——测试按矩阵选 viewport，禁止测试时临时换尺寸"让测试通过"
@@ -208,7 +209,7 @@ Backend: Java 21 + Spring Boot 3.x 分层 · Database: MySQL 8 + Flyway · Deplo
 |--------|--------------|
 | `inspect-project.py` | 只读侦察产出 **PROJECT AUDIT**（Facts/Risks/Next Actions）；信息类，不定级不阻断 |
 | `check-project-hygiene.py` | Git tracked 优先；CRITICAL/ERROR/WARN(Queue)/INFO 四级；Artifact Policy；只检测绝不删除 |
-| `validate-decision-record.py` | 决策门禁：yaml 缺失/status≠confirmed/字段缺失 → BLOCKED |
+| `validate-decision-record.py` | 决策门禁三态：DRAFT/缺失/字段缺失/md-yaml 不一致 → BLOCKED；ASSUMED 放行本地、锁生产；CONFIRMED 全放行 |
 | `check-project-gap.py` | 项目事实 vs 决策目标状态 → HIGH/MEDIUM/LOW 差距 + 最小改造动作 |
 | `seed/reset/verify-test-data.sh` | 测试数据生命周期：幂等播种/清理/就位校验，环境保护（仅本地 loopback 容器） |
 | `run-trigger/functional/regression/hygiene-eval.py` | Skill 自评估执行器：结构校验 + machine_checks（validator/文件断言/输出断言），行为类如实标 MANUAL |
@@ -221,7 +222,7 @@ Backend: Java 21 + Spring Boot 3.x 分层 · Database: MySQL 8 + Flyway · Deplo
 ## Dev Workflow（分模式，带通过条件的检查点）
 
 **CREATE（新项目）**
-1. **Initialization**：Layer -1 问卷 → Decision Record（Status: CONFIRMED）
+1. **Initialization**：Layer -1 问卷 → Decision Record（Status: CONFIRMED；无人应答时 ASSUMED 先本地推进、锁生产，事后追认）
 2. **Blueprint + Scaffold**：目录蓝图 → 空骨架 → `validate-project.py` PASS 才继续
 3. **Backend**：Entity→repository→Service→Controller，全局异常+@Valid；🔍 先跑通一个实体的完整 CRUD（HTTP 实测返回正确 Result）
 4. **Frontend**：Axios interceptor → router→pages→components→services；🔍 先打通一个页面"列表→新增→编辑→删除"（真实后端+loading/错误态+token 自动携带）
@@ -317,7 +318,7 @@ Backend: Java 21 + Spring Boot 3.x 分层 · Database: MySQL 8 + Flyway · Deplo
 ## Result
 Status: PASS / PARTIAL / BLOCKED
 State Transition: BLUEPRINT → SCAFFOLD → VERIFY_SCAFFOLD → IMPLEMENT ...（本次实际走过的状态）
-Decision Record: docs/architecture/decision-record.md（ID/版本，及是否 DRAFT 待追认）
+Decision Record: docs/architecture/decision-record.md（decision_id/revision，及是否 ASSUMED 待追认）
 Architecture: Frontend / Backend / Database
 Project Hygiene: 本阶段目录卫生结论 PASS/WARN/CRITICAL（关键发现列出）
 Files Changed: 关键新增/修改

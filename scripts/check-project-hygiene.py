@@ -211,16 +211,18 @@ def main() -> int:
         prev_map = {it.get("path"): it for it in prev.get("items", [])}
         items = []
         for w in sorted(set(warns)):
-            # 抽取路径证据（首个 root/xxx 片段）
-            m = re.search(r"root/([^（]+?)", w)
-            path_key = m.group(1).strip() if m else w[:60]
+            # 抽取路径证据：root/ 之后到中文括号/空白/行尾前的完整路径
+            # （v3.1.2 修复：旧正则 [^（]+? 非贪婪无下限，只捕获到单字符 t/b，且首字母撞车会互相覆盖）
+            m = re.search(r"root/(\S+?)(?:（|\s|$)", w)
+            path_key = m.group(1).rstrip("/") if m else w[:60]
             old = prev_map.get(path_key)
             items.append({
                 "path": path_key,
                 "severity": "WARN",
                 "reason": w.split("——")[0].strip(),
                 "first_seen": (old or {}).get("first_seen", today),
-                "status": (old or {}).get("status") if (old and (old or {}).get("status") == "resolved") else "pending",
+                # 本次重新检出即为 pending（曾 resolved 后复发也必须重新进队列，不能沿用 resolved）
+                "status": "pending",
                 "detail": w,
             })
         # 之前 Queue 中存在、本次未检出的条目 → resolved（文件已消失）

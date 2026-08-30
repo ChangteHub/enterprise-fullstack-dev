@@ -1,8 +1,9 @@
 # Project Decision Record — 机器可读 schema 与示例
 # ============================================================
 # 位置约定：<项目根>/.decision/project-decision.yaml
-# 校验器：scripts/validate-decision-record.py（缺失 / status != confirmed /
-#         必填字段缺失 → BLOCKED，阻断 BLUEPRINT/SCAFFOLD/IMPLEMENT）
+# 校验器：scripts/validate-decision-record.py（缺失 / status=draft / 必填字段缺失 /
+#         decision_id 或 revision 非法 / md 与 yaml 状态不一致 → BLOCKED，阻断 BLUEPRINT/SCAFFOLD/IMPLEMENT；
+#         assumed 放行本地阶段但锁定生产部署/Remote Side Effect/高风险迁移）
 # 与人读版 docs/architecture/decision-record.md 并存：md 面向人，yaml 面向门禁。
 # 仅使用两层结构的 key: value，不使用列表（解析器保持零依赖）。
 # ============================================================

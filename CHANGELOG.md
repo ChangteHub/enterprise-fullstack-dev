@@ -2,7 +2,7 @@
 
 本文件记录 enterprise-fullstack-dev Skill 的版本变更。遵循 Release Gate：每次发布需通过 `scripts/validate-skill.py` 与 evals 回归。
 
-## [3.1.1] - 最终冻结版（实践问题闭环收口）
+## [3.1.2] - 最终冻结版（实践问题闭环收口 + 冻结验收修复）
 
 ### 定位
 控制面冻结：不再新增领域知识，只修状态语义与边界冲突。目标是从"规则完整"到"真实可执行、可验证、可持续维护"。
@@ -27,6 +27,14 @@
   并以临时 SQL 文件执行规避 heredoc 引号嵌套。一次性容器全闭环复验：reset→verify FAIL→空库幂等→seed 复活→verify PASS。
 - **reset 失败静默半完成**：失败现在显式 exit 1 并提示可安全重跑（删除语义按语句级执行，中断不产生部分删除）。
 - 附带：check-project-gap.py 加载器设置 `sys.dont_write_bytecode`，不再在用户项目留下 `__pycache__`。
+
+### 冻结验收修复（3.1.2 同日复验发现并修复）
+- **Hygiene Queue 路径抽取 bug**：`--queue` 持久化时正则 `root/([^（]+?)` 非贪婪无下限，path 只捕获到单字符（tmp/debug.log→"t"、backup→"b"），不同条目首字母撞车会互相覆盖；改为 `root/(\S+?)(?:（|\s|$)` 捕获完整路径并去掉尾斜杠。
+- **Queue 复发状态错误**：曾 resolved 的问题再次检出时旧逻辑沿用 resolved，等于把复发问题永久藏起；改为本次检出一律 pending，resolved 只由"本次未检出"分支赋予。三轮生命周期实测：7 pending → 全 resolved → 复发重回 7 pending。
+- **三态文档同步**：SKILL.md 的 Gate 表/md 模板/自主执行路径/Validator Philosophy/CREATE workflow/Output Contract 六处仍写两态（自主执行教标 DRAFT，而 DRAFT 已被硬门禁阻断，Agent 会被自己的门禁卡死），全部同步为 DRAFT/ASSUMED/CONFIRMED；schema.yaml 头注释同步。
+- **eval 断言加固**：hygiene.json 污染/干净用例补 `expect_contains/expect_not_contains` 输出断言（锁死 2 error/0 critical 等语义，不再只比退出码）；fixtures/README 污染基线更新为 git 跟踪路径实测值。
+- **仓库卫生**：`test-fixture-secret/target/.../DemoTest.class`（Maven 编译产物）曾被 git 跟踪，违反自家 Artifact Policy → git rm --cached，根 .gitignore 补 target/ 与 *.class；sample-project/target 工作区残留清理。
+- 版本号整理：本冻结版原与上一验收修复同名 3.1.1，按时间顺序与兼容性影响（decision_id/revision 必填）递进为 3.1.2。
 
 ### 兼容性影响
 - 既有项目决策 yaml 需补 `decision_id` 与 `revision`，否则 DECIDE 门禁 BLOCKED（对存量库接入属预期行为）。
